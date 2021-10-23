@@ -3,6 +3,7 @@ Scope.Global / scalaVersion := "2.13.6"
 
 lazy val Versions = new {
   val catsEffect = "3.2.9"
+  val log4cats = "2.1.1"
   val kindProjector = "0.13.2"
   val http4s = "0.22.7"
   val elastic4s = "7.15.1"
@@ -28,6 +29,7 @@ lazy val library =
     // Scala libraries
     val catsEffect = "org.typelevel" %% "cats-effect"                                     % Versions.catsEffect
     val catsEffectKernel = "org.typelevel" %% "cats-effect-kernel"                        % Versions.catsEffect
+    val log4CatsSlf4j = "org.typelevel" %% "log4cats-slf4j"                               % Versions.log4cats
     val elastic4sClientEsjava = "com.sksamuel.elastic4s" %% "elastic4s-client-esjava"     % Versions.elastic4s
     val elastic4sEffectCats = "com.sksamuel.elastic4s" %% "elastic4s-effect-cats"         % Versions.elastic4s
     val elastic4sJsonCirce = "com.sksamuel.elastic4s" %% "elastic4s-json-circe"           % Versions.elastic4s
@@ -85,7 +87,9 @@ lazy val `core` =
     .settings(
       addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
 //      Compile /scalapbCodeGeneratorOptions +=
-      Compile / PB.protocOptions := Seq("--experimental_allow_proto3_optional") // FIXME optional field https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md
+      Compile / PB.protocOptions := Seq(
+        "--experimental_allow_proto3_optional"
+      ) // FIXME optional field https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md
 //      Compile / PB.targets := Seq(
 //        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
 //      )
@@ -127,7 +131,7 @@ lazy val `user-search-api` =
     .settings(settings)
     .enablePlugins(Fs2Grpc)
     .settings(
-      addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
+      addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full)
 //      Compile / PB.targets := Seq(
 //        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
 //      )
@@ -172,6 +176,7 @@ lazy val `user-search-svc` =
         // Scala libraries
         library.catsEffect,
         library.catsEffectKernel,
+        library.log4CatsSlf4j,
         library.elastic4sClientEsjava,
         library.elastic4sEffectCats,
         library.elastic4sJsonCirce,

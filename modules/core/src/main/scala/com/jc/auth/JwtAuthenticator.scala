@@ -1,5 +1,7 @@
 package com.jc.auth
 
+import cats.effect.kernel.Sync
+
 import java.time.Clock
 import io.circe.{Decoder, Encoder}
 import pdi.jwt._
@@ -13,24 +15,24 @@ object JwtAuthenticator {
 
   def sanitizeBearerAuthToken(header: String): String = header.replaceFirst(BearerTokenPrefix, "")
 
-//  trait Service {
-//    def authenticated(rawToken: String): UIO[Option[String]]
-//  }
-//
-//  final case class PdiJwtAuthenticator(helper: PdiJwtHelper, clock: Clock) extends Service {
-//
-//    override def authenticated(rawToken: String): UIO[Option[String]] = {
-//      ZIO.succeed {
-//        for {
-//          claim <- helper.decodeClaim(rawToken).toOption
-//          subject <-
-//            if (claim.isValid(clock)) {
-//              claim.subject
-//            } else None
-//        } yield subject
-//      }
-//    }
-//  }
+  trait Service[F[_]] {
+    def authenticated(rawToken: String): F[Option[String]]
+  }
+
+  final case class PdiJwtAuthenticator[F[_]: Sync](helper: PdiJwtHelper, clock: Clock) extends Service[F] {
+
+    override def authenticated(rawToken: String): F[Option[String]] = {
+      Sync[F].delay {
+        for {
+          claim <- helper.decodeClaim(rawToken).toOption
+          subject <-
+            if (claim.isValid(clock)) {
+              claim.subject
+            } else None
+        } yield subject
+      }
+    }
+  }
 
 }
 

@@ -44,24 +44,24 @@ object LogbackLoggingSystem {
     }
 
     override val getSupportedLogLevels: F[Set[LoggingSystem.LogLevel]] =
-      Sync[F].blocking {
+      Sync[F].delay {
         LogbackLoggingSystem.logLevelMapping.toLogger.keySet
       }
 
     override def getLoggerConfiguration(name: String): F[Option[LoggingSystem.LoggerConfiguration]] =
-      Sync[F].blocking {
+      Sync[F].delay {
         getLogger(name).map(LogbackLoggingSystem.toLoggerConfiguration)
       }
 
     override def getLoggerConfigurations: F[List[LoggingSystem.LoggerConfiguration]] = {
       import scala.jdk.CollectionConverters._
-      Sync[F].blocking {
+      Sync[F].delay {
         loggerContext.getLoggerList.asScala.toList.map(LogbackLoggingSystem.toLoggerConfiguration).sorted
       }
     }
 
     override def setLogLevel(name: String, level: Option[LoggingSystem.LogLevel]): F[Boolean] =
-      Sync[F].blocking {
+      Sync[F].delay {
         val maybeLogger = getLogger(name)
         maybeLogger match {
           case Some(logger) =>
@@ -71,11 +71,11 @@ object LogbackLoggingSystem {
         }
       }
   }
-//
-//  def create(): ZLayer[Any, Throwable, LoggingSystem] = {
-//    StaticLoggerBinder.getSingleton.getLoggerFactory match {
-//      case loggerContext: LoggerContext => ZLayer.succeed(new LogbackLoggingSystemService(loggerContext))
-//      case _ => ZLayer.fail(new RuntimeException("LoggerFactory is not a Logback LoggerContext"))
-//    }
-//  }
+
+  def create[F[_]: Sync](): F[LogbackLoggingSystemService[F]] = {
+    StaticLoggerBinder.getSingleton.getLoggerFactory match {
+      case loggerContext: LoggerContext => Sync[F].delay(new LogbackLoggingSystemService(loggerContext))
+      case _ => Sync[F].raiseError(new RuntimeException("LoggerFactory is not a Logback LoggerContext"))
+    }
+  }
 }
