@@ -103,7 +103,7 @@ lazy val `core` =
 //        )
 //      )
     )
-//    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
+    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
     .settings(
       libraryDependencies ++= Seq(
         // Scala libraries
@@ -146,7 +146,7 @@ lazy val `user-search-api` =
 //        )
 //      )
     )
-//    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
+    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
     .settings(
       libraryDependencies ++= Seq(
         // Scala libraries

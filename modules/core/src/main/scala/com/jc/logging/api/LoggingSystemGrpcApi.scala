@@ -1,6 +1,7 @@
 package com.jc.logging.api
 
-import cats.effect.kernel.Sync
+import cats.effect.Resource
+import cats.effect.kernel.{Async, Sync}
 import com.jc.auth.JwtAuthenticator
 import com.jc.auth.api.GrpcJwtAuth
 import com.jc.logging.LoggingSystem
@@ -14,7 +15,7 @@ import com.jc.logging.proto.{
   LoggingSystemApiServiceFs2Grpc,
   SetLoggerConfigurationReq
 }
-import io.grpc.Metadata
+import io.grpc.{Metadata, ServerServiceDefinition}
 
 object LoggingSystemGrpcApi {
 
@@ -87,4 +88,10 @@ object LoggingSystemGrpcApi {
       } yield LoggerConfigurationsRes(configurations.map(toApiLoggerConfiguration), levels)
     }
   }
+
+  def liveApiServiceResource[F[_]: Async](
+    loggingSystem: LoggingSystem.Service[F],
+    authenticator: JwtAuthenticator.Service[F]): Resource[F, ServerServiceDefinition] =
+    LoggingSystemApiServiceFs2Grpc.bindServiceResource(
+      new LiveLoggingSystemGrpcService[F](loggingSystem, authenticator))
 }

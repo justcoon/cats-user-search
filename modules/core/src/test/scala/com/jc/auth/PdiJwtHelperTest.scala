@@ -12,7 +12,7 @@ class PdiJwtHelperTest extends AnyWordSpecLike with should.Matchers {
 
   implicit val clock: Clock = Clock.systemUTC
 
-  val config = JwtConfig("mySecret", 604800000L, Some("zio-user-search"))
+  val config = JwtConfig("mySecret", 604800000L, Some("cats-user-search"))
   val helper = new PdiJwtHelper(config)
 
   "token" must {

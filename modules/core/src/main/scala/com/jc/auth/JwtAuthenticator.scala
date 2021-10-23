@@ -34,6 +34,11 @@ object JwtAuthenticator {
     }
   }
 
+  def live[F[_]: Sync](config: JwtConfig): PdiJwtAuthenticator[F] = {
+    val helper = new PdiJwtHelper(config)
+    PdiJwtAuthenticator(helper, Clock.systemUTC())
+  }
+
 }
 
 final class PdiJwtHelper(val config: JwtConfig) {
