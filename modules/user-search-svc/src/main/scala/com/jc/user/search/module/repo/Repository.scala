@@ -1,8 +1,6 @@
 package com.jc.user.search.module.repo
 
 import cats.effect.IO
-import cats.effect.kernel.Async
-import com.jc.user.search.model.{ExpectedFailure, RepoFailure}
 import com.sksamuel.elastic4s.ElasticClient
 import io.circe.{Decoder, Encoder}
 import org.typelevel.log4cats.Logger
