@@ -37,7 +37,7 @@ lazy val library =
     val http4sBlazeServer = "org.http4s" %% "http4s-blaze-server"                         % Versions.http4s
     val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client"                         % Versions.http4s
     val http4sCirce = "org.http4s" %% "http4s-circe"                                      % Versions.http4s
-    val tapirCats = "com.softwaremill.sttp.tapir" %% "tapir-cats"                     % Versions.tapir
+    val tapirCats = "com.softwaremill.sttp.tapir" %% "tapir-cats"                         % Versions.tapir
     val tapirSwaggerUiHttp4s = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-http4s" % Versions.tapir
     val circeGeneric = "io.circe" %% "circe-generic"                                      % Versions.circe
     val circeGenericExtras = "io.circe" %% "circe-generic-extras"                         % Versions.circe
@@ -70,7 +70,7 @@ lazy val `cats-user-search` =
   project
     .in(file("."))
     .enablePlugins(GitVersioning)
-    .aggregate( `core`, `user-search-api`, /*`user-search-bench`,*/ `user-search-svc`)
+    .aggregate(`core`, `user-search-api`, /*`user-search-bench`,*/ `user-search-svc`)
     .settings(settings)
     .settings(
       Compile / unmanagedSourceDirectories := Seq.empty,
@@ -84,9 +84,11 @@ lazy val `core` =
     .enablePlugins(Fs2Grpc)
     .settings(
       addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
-      Compile / PB.targets := Seq(
-        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
-      )
+//      Compile /scalapbCodeGeneratorOptions +=
+      Compile / PB.protocOptions := Seq("--experimental_allow_proto3_optional") // FIXME optional field
+//      Compile / PB.targets := Seq(
+//        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
+//      )
 //      Compile / guardrailTasks := List(
 //        ScalaServer(
 //          file(s"${baseDirectory.value}/src/main/openapi/LoggingSystemOpenApi.yaml"),
@@ -126,9 +128,9 @@ lazy val `user-search-api` =
     .enablePlugins(Fs2Grpc)
     .settings(
       addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
-      Compile / PB.targets := Seq(
-        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
-      ),
+//      Compile / PB.targets := Seq(
+//        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
+//      )
 //      Compile / guardrailTasks := List(
 //        ScalaServer(
 //          file(s"${baseDirectory.value}/src/main/openapi/UserSearchOpenApi.yaml"),
