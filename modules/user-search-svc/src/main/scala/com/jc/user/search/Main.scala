@@ -54,12 +54,14 @@ object Main extends IOApp.Simple {
 
     elasticClientResource = createElasticClient(appConfig.elasticsearch)
 
+    // FIXME resources compositions - issue with elasticClientResource closed
     repos <- elasticClientResource.use { elasticClient =>
       for {
         u <- UserSearchRepo.elasticsearch(appConfig.elasticsearch.userIndexName, elasticClient)
         d <- DepartmentSearchRepo.elasticsearch(appConfig.elasticsearch.departmentIndexName, elasticClient)
       } yield (u, d)
     }
+
     grpcApiResources = for {
       userSearchGrpcApiServiceResource <- UserSearchGrpcApi
         .liveApiServiceResource[IO](repos._1, repos._2, authenticator)
