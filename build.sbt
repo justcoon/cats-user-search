@@ -85,7 +85,7 @@ lazy val `core` =
     .settings(
       addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
 //      Compile /scalapbCodeGeneratorOptions +=
-      Compile / PB.protocOptions := Seq("--experimental_allow_proto3_optional") // FIXME optional field
+      Compile / PB.protocOptions := Seq("--experimental_allow_proto3_optional") // FIXME optional field https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md
 //      Compile / PB.targets := Seq(
 //        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
 //      )

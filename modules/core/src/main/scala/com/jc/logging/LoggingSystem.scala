@@ -2,31 +2,31 @@ package com.jc.logging
 
 object LoggingSystem {
 
-//  /** logging system component
-//    */
-//  trait Service {
-//
-//    /** get log levels supported by logging system
-//      */
-//    def getSupportedLogLevels: UIO[Set[LogLevel]]
-//
-//    /** get logger configuration by name
-//      */
-//    def getLoggerConfiguration(name: String): UIO[Option[LoggingSystem.LoggerConfiguration]]
-//
-//    /** get all loggers configurations
-//      */
-//    def getLoggerConfigurations: UIO[List[LoggingSystem.LoggerConfiguration]]
-//
-//    /** set [[level]] for logger with [[name]]
-//      *
-//      * @param name logger name
-//      * @param level if non empty, given level will be set for logger, otherwise custom level configuration will be cleared
-//      *
-//      * @return [[true]] if logger configuration was successfully updated
-//      */
-//    def setLogLevel(name: String, level: Option[LogLevel]): UIO[Boolean]
-//  }
+  /** logging system component
+    */
+  trait Service[F[_]] {
+
+    /** get log levels supported by logging system
+      */
+    def getSupportedLogLevels: F[Set[LogLevel]]
+
+    /** get logger configuration by name
+      */
+    def getLoggerConfiguration(name: String): F[Option[LoggingSystem.LoggerConfiguration]]
+
+    /** get all loggers configurations
+      */
+    def getLoggerConfigurations: F[List[LoggingSystem.LoggerConfiguration]]
+
+    /** set [[level]] for logger with [[name]]
+      *
+      * @param name logger name
+      * @param level if non empty, given level will be set for logger, otherwise custom level configuration will be cleared
+      *
+      * @return [[true]] if logger configuration was successfully updated
+      */
+    def setLogLevel(name: String, level: Option[LogLevel]): F[Boolean]
+  }
 
   sealed trait LogLevel extends Product with Serializable
 

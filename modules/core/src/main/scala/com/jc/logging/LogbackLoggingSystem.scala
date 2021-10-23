@@ -4,7 +4,7 @@ import ch.qos.logback.classic
 import ch.qos.logback.classic.{Level, LoggerContext}
 import org.slf4j.Logger
 import org.slf4j.impl.StaticLoggerBinder
-
+import cats.effect.Sync
 import scala.util.Try
 
 object LogbackLoggingSystem {
@@ -29,48 +29,48 @@ object LogbackLoggingSystem {
     LoggingSystem.LoggerConfiguration(name, effectiveLevel, configuredLevel)
   }
 
-//  /** Logback [[LoggingSystem]] Service
-//    *
-//    * @param loggerContext logback logger context
-//    */
-//  final class LogbackLoggingSystemService(loggerContext: LoggerContext) extends LoggingSystem.Service {
-//
-//    implicit private val ordering = LoggingSystem.loggerConfigurationOrdering(Logger.ROOT_LOGGER_NAME)
-//
-//    private def getLogger(name: String): Option[classic.Logger] = {
-//      val loggerName = if (name.isBlank) Logger.ROOT_LOGGER_NAME else name
-//      // just existing logger
-//      Option(loggerContext.exists(loggerName))
-//    }
-//
-//    override val getSupportedLogLevels: UIO[Set[LoggingSystem.LogLevel]] =
-//      ZIO.succeed {
-//        LogbackLoggingSystem.logLevelMapping.toLogger.keySet
-//      }
-//
-//    override def getLoggerConfiguration(name: String): UIO[Option[LoggingSystem.LoggerConfiguration]] =
-//      ZIO.succeed {
-//        getLogger(name).map(LogbackLoggingSystem.toLoggerConfiguration)
-//      }
-//
-//    override def getLoggerConfigurations: UIO[List[LoggingSystem.LoggerConfiguration]] = {
-//      import scala.jdk.CollectionConverters._
-//      ZIO.succeed {
-//        loggerContext.getLoggerList.asScala.toList.map(LogbackLoggingSystem.toLoggerConfiguration).sorted
-//      }
-//    }
-//
-//    override def setLogLevel(name: String, level: Option[LoggingSystem.LogLevel]): UIO[Boolean] =
-//      ZIO.succeed {
-//        val maybeLogger = getLogger(name)
-//        maybeLogger match {
-//          case Some(logger) =>
-//            val loggerLevel = level.flatMap(LogbackLoggingSystem.logLevelMapping.toLogger.get).orNull
-//            Try(logger.setLevel(loggerLevel)).isSuccess
-//          case None => false
-//        }
-//      }
-//  }
+  /** Logback [[LoggingSystem]] Service
+    *
+    * @param loggerContext logback logger context
+    */
+  final class LogbackLoggingSystemService[F[_]: Sync](loggerContext: LoggerContext) extends LoggingSystem.Service[F] {
+
+    implicit private val ordering = LoggingSystem.loggerConfigurationOrdering(Logger.ROOT_LOGGER_NAME)
+
+    private def getLogger(name: String): Option[classic.Logger] = {
+      val loggerName = if (name.isBlank) Logger.ROOT_LOGGER_NAME else name
+      // just existing logger
+      Option(loggerContext.exists(loggerName))
+    }
+
+    override val getSupportedLogLevels: F[Set[LoggingSystem.LogLevel]] =
+      Sync[F].blocking {
+        LogbackLoggingSystem.logLevelMapping.toLogger.keySet
+      }
+
+    override def getLoggerConfiguration(name: String): F[Option[LoggingSystem.LoggerConfiguration]] =
+      Sync[F].blocking {
+        getLogger(name).map(LogbackLoggingSystem.toLoggerConfiguration)
+      }
+
+    override def getLoggerConfigurations: F[List[LoggingSystem.LoggerConfiguration]] = {
+      import scala.jdk.CollectionConverters._
+      Sync[F].blocking {
+        loggerContext.getLoggerList.asScala.toList.map(LogbackLoggingSystem.toLoggerConfiguration).sorted
+      }
+    }
+
+    override def setLogLevel(name: String, level: Option[LoggingSystem.LogLevel]): F[Boolean] =
+      Sync[F].blocking {
+        val maybeLogger = getLogger(name)
+        maybeLogger match {
+          case Some(logger) =>
+            val loggerLevel = level.flatMap(LogbackLoggingSystem.logLevelMapping.toLogger.get).orNull
+            Try(logger.setLevel(loggerLevel)).isSuccess
+          case None => false
+        }
+      }
+  }
 //
 //  def create(): ZLayer[Any, Throwable, LoggingSystem] = {
 //    StaticLoggerBinder.getSingleton.getLoggerFactory match {
