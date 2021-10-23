@@ -1,5 +1,7 @@
 package com.jc.logging.api
 
+import cats.effect.Resource
+import cats.effect.kernel.{Async, Sync}
 import com.jc.auth.JwtAuthenticator
 import com.jc.auth.api.GrpcJwtAuth
 import com.jc.logging.LoggingSystem
@@ -10,9 +12,10 @@ import com.jc.logging.proto.{
   LoggerConfiguration,
   LoggerConfigurationRes,
   LoggerConfigurationsRes,
+  LoggingSystemApiServiceFs2Grpc,
   SetLoggerConfigurationReq
 }
-import io.grpc.Status
+import io.grpc.{Metadata, ServerServiceDefinition}
 
 object LoggingSystemGrpcApi {
 
@@ -33,58 +36,62 @@ object LoggingSystemGrpcApi {
     )
   )
 
-//  final case class LiveLoggingSystemGrpcService(
-//    loggingSystem: LoggingSystem.Service,
-//    authenticator: JwtAuthenticator.Service)
-//      extends RCLoggingSystemApiService[Any] {
-//
-//    def getSupportedLogLevels: UIO[Seq[LogLevel]] =
-//      loggingSystem.getSupportedLogLevels.map { levels =>
-//        levels.map(logLevelMapping.toLogger).toSeq
-//      }
-//
-//    def toApiLoggerConfiguration(configuration: LoggingSystem.LoggerConfiguration): LoggerConfiguration =
-//      LoggerConfiguration(
-//        configuration.name,
-//        logLevelMapping.toLogger(configuration.effectiveLevel),
-//        configuration.configuredLevel.flatMap(logLevelMapping.toLogger.get)
-//      )
-//
-//    override def setLoggerConfiguration(
-//      request: SetLoggerConfigurationReq): ZIO[Any with Has[RequestContext], Status, LoggerConfigurationRes] = {
-//      for {
-//        _ <- GrpcJwtAuth.authenticated(authenticator)
-//        res <- loggingSystem.setLogLevel(request.name, request.level.flatMap(logLevelMapping.fromLogger.get))
-//        levels <- getSupportedLogLevels
-//        configuration <-
-//          if (res) {
-//            loggingSystem.getLoggerConfiguration(request.name)
-//          } else ZIO.succeed(None)
-//      } yield LoggerConfigurationRes(configuration.map(toApiLoggerConfiguration), levels)
-//    }
-//
-//    override def getLoggerConfiguration(
-//      request: GetLoggerConfigurationReq): ZIO[Any with Has[RequestContext], Status, LoggerConfigurationRes] = {
-//      for {
-//        _ <- GrpcJwtAuth.authenticated(authenticator)
-//        levels <- getSupportedLogLevels
-//        configuration <- loggingSystem.getLoggerConfiguration(request.name)
-//      } yield LoggerConfigurationRes(configuration.map(toApiLoggerConfiguration), levels)
-//    }
-//
-//    override def getLoggerConfigurations(
-//      request: GetLoggerConfigurationsReq): ZIO[Any with Has[RequestContext], Status, LoggerConfigurationsRes] = {
-//      for {
-//        _ <- GrpcJwtAuth.authenticated(authenticator)
-//        levels <- getSupportedLogLevels
-//        configurations <- loggingSystem.getLoggerConfigurations
-//      } yield LoggerConfigurationsRes(configurations.map(toApiLoggerConfiguration), levels)
-//    }
-//  }
-//
-//  val live: ZLayer[LoggingSystem with JwtAuthenticator, Nothing, LoggingSystemGrpcApiHandler] =
-//    ZLayer.fromServices[LoggingSystem.Service, JwtAuthenticator.Service, RCLoggingSystemApiService[Any]] {
-//      (loggingSystem, authenticator) =>
-//        LiveLoggingSystemGrpcService(loggingSystem, authenticator)
-//    }
+  final case class LiveLoggingSystemGrpcService[F[_]: Sync](
+    loggingSystem: LoggingSystem.Service[F],
+    authenticator: JwtAuthenticator.Service[F])
+      extends LoggingSystemApiServiceFs2Grpc[F, io.grpc.Metadata] {
+    import cats.syntax.all._
+
+    def getSupportedLogLevels: F[Seq[LogLevel]] =
+      loggingSystem.getSupportedLogLevels.map { levels =>
+        levels.map(logLevelMapping.toLogger).toSeq
+      }
+
+    def toApiLoggerConfiguration(configuration: LoggingSystem.LoggerConfiguration): LoggerConfiguration =
+      LoggerConfiguration(
+        configuration.name,
+        logLevelMapping.toLogger(configuration.effectiveLevel),
+        configuration.configuredLevel.flatMap(logLevelMapping.toLogger.get).orNull
+      )
+
+    override def setLoggerConfiguration(
+      request: SetLoggerConfigurationReq,
+      ctx: Metadata): F[LoggerConfigurationRes] = {
+      for {
+        _ <- GrpcJwtAuth.authenticated(ctx, authenticator)
+        res <- loggingSystem.setLogLevel(request.name, Option(request.level).flatMap(logLevelMapping.fromLogger.get))
+        levels <- getSupportedLogLevels
+        configuration <-
+          if (res) {
+            loggingSystem.getLoggerConfiguration(request.name)
+          } else Sync[F].delay(None)
+      } yield LoggerConfigurationRes(configuration.map(toApiLoggerConfiguration), levels)
+    }
+
+    override def getLoggerConfiguration(
+      request: GetLoggerConfigurationReq,
+      ctx: Metadata): F[LoggerConfigurationRes] = {
+      for {
+        _ <- GrpcJwtAuth.authenticated(ctx, authenticator)
+        levels <- getSupportedLogLevels
+        configuration <- loggingSystem.getLoggerConfiguration(request.name)
+      } yield LoggerConfigurationRes(configuration.map(toApiLoggerConfiguration), levels)
+    }
+
+    override def getLoggerConfigurations(
+      request: GetLoggerConfigurationsReq,
+      ctx: Metadata): F[LoggerConfigurationsRes] = {
+      for {
+        _ <- GrpcJwtAuth.authenticated(ctx, authenticator)
+        levels <- getSupportedLogLevels
+        configurations <- loggingSystem.getLoggerConfigurations
+      } yield LoggerConfigurationsRes(configurations.map(toApiLoggerConfiguration), levels)
+    }
+  }
+
+  def liveApiServiceResource[F[_]: Async](
+    loggingSystem: LoggingSystem.Service[F],
+    authenticator: JwtAuthenticator.Service[F]): Resource[F, ServerServiceDefinition] =
+    LoggingSystemApiServiceFs2Grpc.bindServiceResource(
+      new LiveLoggingSystemGrpcService[F](loggingSystem, authenticator))
 }

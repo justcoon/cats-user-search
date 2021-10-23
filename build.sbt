@@ -3,6 +3,7 @@ Scope.Global / scalaVersion := "2.13.6"
 
 lazy val Versions = new {
   val catsEffect = "3.2.9"
+  val log4cats = "2.1.1"
   val kindProjector = "0.13.2"
   val http4s = "0.22.7"
   val elastic4s = "7.15.1"
@@ -28,6 +29,7 @@ lazy val library =
     // Scala libraries
     val catsEffect = "org.typelevel" %% "cats-effect"                                     % Versions.catsEffect
     val catsEffectKernel = "org.typelevel" %% "cats-effect-kernel"                        % Versions.catsEffect
+    val log4CatsSlf4j = "org.typelevel" %% "log4cats-slf4j"                               % Versions.log4cats
     val elastic4sClientEsjava = "com.sksamuel.elastic4s" %% "elastic4s-client-esjava"     % Versions.elastic4s
     val elastic4sEffectCats = "com.sksamuel.elastic4s" %% "elastic4s-effect-cats"         % Versions.elastic4s
     val elastic4sJsonCirce = "com.sksamuel.elastic4s" %% "elastic4s-json-circe"           % Versions.elastic4s
@@ -37,7 +39,7 @@ lazy val library =
     val http4sBlazeServer = "org.http4s" %% "http4s-blaze-server"                         % Versions.http4s
     val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client"                         % Versions.http4s
     val http4sCirce = "org.http4s" %% "http4s-circe"                                      % Versions.http4s
-    val tapirCats = "com.softwaremill.sttp.tapir" %% "tapir-cats"                     % Versions.tapir
+    val tapirCats = "com.softwaremill.sttp.tapir" %% "tapir-cats"                         % Versions.tapir
     val tapirSwaggerUiHttp4s = "com.softwaremill.sttp.tapir" %% "tapir-swagger-ui-http4s" % Versions.tapir
     val circeGeneric = "io.circe" %% "circe-generic"                                      % Versions.circe
     val circeGenericExtras = "io.circe" %% "circe-generic-extras"                         % Versions.circe
@@ -70,7 +72,7 @@ lazy val `cats-user-search` =
   project
     .in(file("."))
     .enablePlugins(GitVersioning)
-    .aggregate( `core`, `user-search-api`, /*`user-search-bench`,*/ `user-search-svc`)
+    .aggregate(`core`, `user-search-api`, /*`user-search-bench`,*/ `user-search-svc`)
     .settings(settings)
     .settings(
       Compile / unmanagedSourceDirectories := Seq.empty,
@@ -84,9 +86,13 @@ lazy val `core` =
     .enablePlugins(Fs2Grpc)
     .settings(
       addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
-      Compile / PB.targets := Seq(
-        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
-      )
+//      Compile /scalapbCodeGeneratorOptions +=
+      Compile / PB.protocOptions := Seq(
+        "--experimental_allow_proto3_optional"
+      ) // FIXME optional field https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md
+//      Compile / PB.targets := Seq(
+//        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
+//      )
 //      Compile / guardrailTasks := List(
 //        ScalaServer(
 //          file(s"${baseDirectory.value}/src/main/openapi/LoggingSystemOpenApi.yaml"),
@@ -97,7 +103,7 @@ lazy val `core` =
 //        )
 //      )
     )
-//    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
+    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
     .settings(
       libraryDependencies ++= Seq(
         // Scala libraries
@@ -125,10 +131,10 @@ lazy val `user-search-api` =
     .settings(settings)
     .enablePlugins(Fs2Grpc)
     .settings(
-      addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
-      Compile / PB.targets := Seq(
-        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
-      ),
+      addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full)
+//      Compile / PB.targets := Seq(
+//        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
+//      )
 //      Compile / guardrailTasks := List(
 //        ScalaServer(
 //          file(s"${baseDirectory.value}/src/main/openapi/UserSearchOpenApi.yaml"),
@@ -140,7 +146,7 @@ lazy val `user-search-api` =
 //        )
 //      )
     )
-//    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
+    .settings(Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "openapi")
     .settings(
       libraryDependencies ++= Seq(
         // Scala libraries
@@ -170,6 +176,7 @@ lazy val `user-search-svc` =
         // Scala libraries
         library.catsEffect,
         library.catsEffectKernel,
+        library.log4CatsSlf4j,
         library.elastic4sClientEsjava,
         library.elastic4sEffectCats,
         library.elastic4sJsonCirce,
