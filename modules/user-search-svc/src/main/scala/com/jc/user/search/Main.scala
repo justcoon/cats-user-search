@@ -52,19 +52,13 @@ object Main extends IOApp.Simple {
     loggingSystem <- LogbackLoggingSystem.create[IO]()
     authenticator = JwtAuthenticator.live[IO](appConfig.jwt)
 
-    elasticClientResource = createElasticClient(appConfig.elasticsearch)
-
-    // FIXME resources compositions - issue with elasticClientResource closed
-    repos <- elasticClientResource.use { elasticClient =>
-      for {
-        u <- UserSearchRepo.elasticsearch(appConfig.elasticsearch.userIndexName, elasticClient)
-        d <- DepartmentSearchRepo.elasticsearch(appConfig.elasticsearch.departmentIndexName, elasticClient)
-      } yield (u, d)
-    }
-
     grpcApiResources = for {
+      elasticClient <- createElasticClient(appConfig.elasticsearch)
+      userRepo <- Resource.eval(UserSearchRepo.elasticsearch(appConfig.elasticsearch.userIndexName, elasticClient))
+      depRepo <- Resource.eval(
+        DepartmentSearchRepo.elasticsearch(appConfig.elasticsearch.departmentIndexName, elasticClient))
       userSearchGrpcApiServiceResource <- UserSearchGrpcApi
-        .liveApiServiceResource[IO](repos._1, repos._2, authenticator)
+        .liveApiServiceResource[IO](userRepo, depRepo, authenticator)
       loggingSystemGrpcApiServiceResource <- LoggingSystemGrpcApi
         .liveApiServiceResource[IO](loggingSystem, authenticator)
     } yield {
