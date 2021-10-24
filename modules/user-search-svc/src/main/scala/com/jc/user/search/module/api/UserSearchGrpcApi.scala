@@ -69,7 +69,25 @@ object UserSearchGrpcApi {
         }
     }
 
-    override def searchUserStream(request: SearchUserStreamReq, ctx: Metadata): fs2.Stream[F, User] = ???
+    override def searchUserStream(request: SearchUserStreamReq, ctx: Metadata): fs2.Stream[F, User] = {
+      val ss = request.sorts.map(toRepoFieldSort)
+      val q = if (request.query.isBlank) None else Some(request.query)
+
+      val pageInitial = 0
+      val pageSize = 20
+
+      fs2.Stream
+        .unfoldEval(pageInitial) { page =>
+          userSearchRepo
+            .search(q, page, pageSize, ss)
+            .map { r =>
+              if ((r.page * r.pageSize) < r.count || r.items.nonEmpty) Some((r.items, r.page + 1))
+              else None
+            }
+        }
+        .flatMap(fs2.Stream.emits)
+        .map(_.transformInto[proto.User])
+    }
 
     override def suggestUsers(request: SuggestUsersReq, ctx: Metadata): F[SuggestUsersRes] = {
       userSearchRepo
@@ -105,8 +123,27 @@ object UserSearchGrpcApi {
         }
     }
 
-    override def searchDepartmentStream(request: SearchDepartmentStreamReq, ctx: Metadata): fs2.Stream[F, Department] =
-      ???
+    override def searchDepartmentStream(
+      request: SearchDepartmentStreamReq,
+      ctx: Metadata): fs2.Stream[F, Department] = {
+      val ss = request.sorts.map(toRepoFieldSort)
+      val q = if (request.query.isBlank) None else Some(request.query)
+
+      val pageInitial = 0
+      val pageSize = 20
+
+      fs2.Stream
+        .unfoldEval(pageInitial) { page =>
+          departmentSearchRepo
+            .search(q, page, pageSize, ss)
+            .map { r =>
+              if ((r.page * r.pageSize) < r.count || r.items.nonEmpty) Some((r.items, r.page + 1))
+              else None
+            }
+        }
+        .flatMap(fs2.Stream.emits)
+        .map(_.transformInto[proto.Department])
+    }
 
     override def suggestDepartments(request: SuggestDepartmentsReq, ctx: Metadata): F[SuggestDepartmentsRes] = {
       departmentSearchRepo
