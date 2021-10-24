@@ -72,7 +72,7 @@ lazy val `cats-user-search` =
   project
     .in(file("."))
     .enablePlugins(GitVersioning)
-    .aggregate(`core`, `user-search-api`, /*`user-search-bench`,*/ `user-search-svc`)
+    .aggregate(`core`, `user-search-api`, `user-search-bench`, `user-search-svc`)
     .settings(settings)
     .settings(
       Compile / unmanagedSourceDirectories := Seq.empty,
@@ -207,30 +207,30 @@ lazy val `user-search-svc` =
     .aggregate(`user-search-api`)
     .dependsOn(`user-search-api`, `core`)
 
-//lazy val `user-search-bench` =
-//  (project in file("modules/user-search-bench"))
-//    .enablePlugins(GatlingPlugin)
-//    .settings(settings)
-//    .settings(
-//      addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full)
-//    )
-//    .settings(
-//      dependencyOverrides += library.scalapbRuntimeGrpc, // gatlig grpc issue
-//      libraryDependencies ++= Seq(
-//        library.pureconfig,
-//        library.refinedPureconfig,
-//        library.grpcServices,
-//        library.grpcNetty,
-//        library.grpcNettyShadded,
-//        library.scalapbRuntime,
-//        library.scalapbRuntimeGrpc,
-//        library.gatlingCharts,
-//        library.gatlingTest,
-//        library.gatlingGrpc
-//      )
-//    )
-//    .aggregate(`user-search-api`)
-//    .dependsOn(`user-search-api`, `core`)
+lazy val `user-search-bench` =
+  (project in file("modules/user-search-bench"))
+    .enablePlugins(GatlingPlugin)
+    .settings(settings)
+    .settings(
+      addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full)
+    )
+    .settings(
+      dependencyOverrides += library.scalapbRuntimeGrpc, // gatlig grpc issue
+      libraryDependencies ++= Seq(
+        library.pureconfig,
+        library.refinedPureconfig,
+        library.grpcServices,
+        library.grpcNetty,
+        library.grpcNettyShadded,
+        library.scalapbRuntime,
+        library.scalapbRuntimeGrpc,
+        library.gatlingCharts,
+        library.gatlingTest,
+        library.gatlingGrpc
+      )
+    )
+    .aggregate(`user-search-api`)
+    .dependsOn(`user-search-api`, `core`)
 
 lazy val settings = commonSettings ++ gitSettings
 
