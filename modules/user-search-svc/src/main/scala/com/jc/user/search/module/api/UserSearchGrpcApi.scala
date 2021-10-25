@@ -25,7 +25,6 @@ import com.jc.user.search.api.proto.{
   SuggestUsersRes,
   UserSearchApiServiceFs2Grpc
 }
-import com.jc.user.search.model.ExpectedFailure
 import com.jc.user.search.module.repo.{DepartmentSearchRepo, SearchRepository, UserSearchRepo}
 import io.grpc.{Metadata, ServerServiceDefinition}
 
@@ -55,9 +54,9 @@ object UserSearchGrpcApi {
       val q = if (request.query.isBlank) None else Some(request.query)
       userSearchRepo
         .search(q, request.page, request.pageSize, ss)
-//        .onError { e =>
-//          SearchUsersRes(result = SearchUsersRes.Result.Failure(ExpectedFailure.getMessage(e)))
-//        }
+        .onError { e =>
+          Async[F].delay(SearchUsersRes(result = SearchUsersRes.Result.Failure(e.getMessage)))
+        }
         .map { r =>
           SearchUsersRes(
             r.items.map(_.transformInto[proto.User]),
@@ -92,10 +91,12 @@ object UserSearchGrpcApi {
     override def suggestUsers(request: SuggestUsersReq, ctx: Metadata): F[SuggestUsersRes] = {
       userSearchRepo
         .suggest(request.query)
-        //        .onError { e =>
-        //          SearchUsersRes(result = SearchUsersRes.Result.Failure(ExpectedFailure.getMessage(e)))
-        //        }
-        .map(r => SuggestUsersRes(r.items.map(_.transformInto[PropertySuggestion]), SuggestUsersRes.Result.Success("")))
+        .onError { e =>
+          Async[F].delay(SearchUsersRes(result = SearchUsersRes.Result.Failure(e.getMessage)))
+        }
+        .map { r =>
+          SuggestUsersRes(r.items.map(_.transformInto[PropertySuggestion]), SuggestUsersRes.Result.Success(""))
+        }
     }
 
     override def getDepartment(request: GetDepartmentReq, ctx: Metadata): F[GetDepartmentRes] = {
@@ -110,9 +111,9 @@ object UserSearchGrpcApi {
       val q = if (request.query.isBlank) None else Some(request.query)
       departmentSearchRepo
         .search(q, request.page, request.pageSize, ss)
-        //        .onError { e =>
-        //          SearchUsersRes(result = SearchUsersRes.Result.Failure(ExpectedFailure.getMessage(e)))
-        //        }
+        .onError { e =>
+          Async[F].delay(SearchDepartmentsRes(result = SearchDepartmentsRes.Result.Failure(e.getMessage)))
+        }
         .map { r =>
           SearchDepartmentsRes(
             r.items.map(_.transformInto[proto.Department]),
@@ -148,13 +149,14 @@ object UserSearchGrpcApi {
     override def suggestDepartments(request: SuggestDepartmentsReq, ctx: Metadata): F[SuggestDepartmentsRes] = {
       departmentSearchRepo
         .suggest(request.query)
-        //        .onError { e =>
-        //          SearchUsersRes(result = SearchUsersRes.Result.Failure(ExpectedFailure.getMessage(e)))
-        //        }
-        .map(r =>
+        .onError { e =>
+          Async[F].delay(SearchDepartmentsRes(result = SearchDepartmentsRes.Result.Failure(e.getMessage)))
+        }
+        .map { r =>
           SuggestDepartmentsRes(
             r.items.map(_.transformInto[PropertySuggestion]),
-            SuggestDepartmentsRes.Result.Success("")))
+            SuggestDepartmentsRes.Result.Success(""))
+        }
     }
   }
 

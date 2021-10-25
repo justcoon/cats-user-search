@@ -4,7 +4,7 @@ import ch.qos.logback.classic
 import ch.qos.logback.classic.{Level, LoggerContext}
 import org.slf4j.Logger
 import org.slf4j.impl.StaticLoggerBinder
-import cats.effect.Sync
+import cats.effect.kernel.Sync
 import scala.util.Try
 
 object LogbackLoggingSystem {

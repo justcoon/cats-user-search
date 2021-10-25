@@ -11,8 +11,6 @@ import com.jc.user.search.module.repo.{DepartmentSearchRepo, UserSearchRepo}
 import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties}
 import com.sksamuel.elastic4s.http.JavaClient
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
-import fs2.grpc.syntax.all._
-import fs2._
 import io.grpc.ServerServiceDefinition
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -23,6 +21,7 @@ import java.net.InetSocketAddress
 object Main extends IOApp.Simple {
 
   def runGrpcServer(service: List[ServerServiceDefinition], config: HttpApiConfig, logger: Logger[IO]) = {
+    import fs2.grpc.syntax.all._
     import scala.jdk.CollectionConverters._
     val a = new InetSocketAddress(config.address, config.port)
     for {
@@ -57,12 +56,10 @@ object Main extends IOApp.Simple {
       userRepo <- Resource.eval(UserSearchRepo.elasticsearch(appConfig.elasticsearch.userIndexName, elasticClient))
       depRepo <- Resource.eval(
         DepartmentSearchRepo.elasticsearch(appConfig.elasticsearch.departmentIndexName, elasticClient))
-      userSearchGrpcApiServiceResource <- UserSearchGrpcApi
-        .liveApiServiceResource[IO](userRepo, depRepo, authenticator)
-      loggingSystemGrpcApiServiceResource <- LoggingSystemGrpcApi
-        .liveApiServiceResource[IO](loggingSystem, authenticator)
+      userSearchGrpcApi <- UserSearchGrpcApi.liveApiServiceResource[IO](userRepo, depRepo, authenticator)
+      loggingSystemGrpcApi <- LoggingSystemGrpcApi.liveApiServiceResource[IO](loggingSystem, authenticator)
     } yield {
-      userSearchGrpcApiServiceResource :: loggingSystemGrpcApiServiceResource :: Nil
+      userSearchGrpcApi :: loggingSystemGrpcApi :: Nil
     }
     _ <- grpcApiResources.use(r => runGrpcServer(r, appConfig.grpcApi, logger))
   } yield ()

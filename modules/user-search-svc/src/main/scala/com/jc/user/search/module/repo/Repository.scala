@@ -73,12 +73,10 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
     serviceLogger.debug(s"insert - ${indexName} - id: ${id}") *>
       elasticClient.execute {
         indexInto(indexName).doc(value).id(id)
-      }.map(_.isSuccess)
-
-//        .mapError(RepoFailure).tapError { e =>
-//        serviceLogger.error(s"insert - ${indexName} - id: ${value.id} - error: ${e.throwable.getMessage}") *>
-//          IO.raiseError(e)
-//      }
+      }.map(_.isSuccess).onError { e =>
+        serviceLogger.error(s"insert - ${indexName} - id: ${value.id} - error: ${e.getMessage}") *>
+          IO.raiseError(e)
+      }
   }
 
   override def update(value: E): IO[Boolean] = {
@@ -86,23 +84,20 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
     serviceLogger.debug(s"update - ${indexName} - id: ${id}") *>
       elasticClient.execute {
         updateById(indexName, value.id.toString).doc(value)
-      }.map(_.isSuccess)
-
-//        .mapError(RepoFailure).tapError { e =>
-//        serviceLogger.error(s"update - ${indexName} - id: ${id} - error: ${e.throwable.getMessage}") *>
-//          IO.raiseError(e)
-//      }
+      }.map(_.isSuccess).onError { e =>
+        serviceLogger.error(s"update - ${indexName} - id: ${id} - error: ${e.getMessage}") *>
+          IO.raiseError(e)
+      }
   }
 
   override def delete(id: ID): IO[Boolean] = {
     serviceLogger.debug(s"update - id: ${id}") *>
       elasticClient.execute {
         deleteById(indexName, id.toString)
-      }.map(_.isSuccess)
-//        .mapError(RepoFailure).tapError { e =>
-//        serviceLogger.error(s"update - id: ${id} - error: ${e.throwable.getMessage}") *>
-//          IO.raiseError(e)
-//      }
+      }.map(_.isSuccess).onError { e =>
+        serviceLogger.error(s"update - id: ${id} - error: ${e.getMessage}") *>
+          IO.raiseError(e)
+      }
   }
 
   override def find(id: ID): IO[Option[E]] = {
@@ -114,22 +109,20 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
           Option(r.result.to[E])
         else
           Option.empty
+      }.onError { e =>
+        serviceLogger.error(s"find - ${indexName} - id: ${id} - error: ${e.getMessage}") *>
+          IO.raiseError(e)
       }
-//        .mapError(RepoFailure).tapError { e =>
-//        serviceLogger.error(s"find - ${indexName} - id: ${id} - error: ${e.throwable.getMessage}") *>
-//          IO.raiseError(e)
-//      }
   }
 
   override def findAll(): IO[Seq[E]] = {
     serviceLogger.debug(s"findAll - ${indexName}") *>
       elasticClient.execute {
         searchIndex(indexName).matchAllQuery()
-      }.map(_.result.to[E])
-//        .mapError(RepoFailure).tapError { e =>
-    //        serviceLogger.error(s"findAll - ${indexName} - error: ${e.throwable.getMessage}") *>
-    //          IO.raiseError(e)
-    //      }
+      }.map(_.result.to[E]).onError { e =>
+        serviceLogger.error(s"findAll - ${indexName} - error: ${e.getMessage}") *>
+          IO.raiseError(e)
+      }
   }
 }
 
@@ -173,11 +166,10 @@ class ESSearchRepository[E <: Repository.Entity[_]: Encoder: Decoder: ClassTag](
         } else {
           IO.raiseError(new Exception(ElasticUtils.getReason(res.error)))
         }
+      }.onError { e =>
+        serviceLogger.error(s"search - ${indexName} - query: '${q}' - error: ${e.getMessage}") *>
+          IO.raiseError(e)
       }
-//        .mapError(RepoFailure).tapError { e =>
-//        serviceLogger.error(s"search - ${indexName} - query: '${q}' - error: ${e.throwable.getMessage}") *>
-//          IO.raiseError(e)
-//      }
   }
 
   override def search(
@@ -203,13 +195,12 @@ class ESSearchRepository[E <: Repository.Entity[_]: Encoder: Decoder: ClassTag](
         } else {
           IO.raiseError(new Exception(ElasticUtils.getReason(res.error)))
         }
+      }.onError { e =>
+        serviceLogger.error(
+          s"search - ${indexName} - query: '${query.getOrElse("N/A")}', page: $page, pageSize: $pageSize, sorts: ${sorts
+            .mkString("[", ",", "]")} - error: ${e.getMessage}") *>
+          IO.raiseError(e)
       }
-//        .mapError(RepoFailure).tapError { e =>
-//        serviceLogger.error(
-//          s"search - ${indexName} - query: '${query.getOrElse("N/A")}', page: $page, pageSize: $pageSize, sorts: ${sorts
-//            .mkString("[", ",", "]")} - error: ${e.throwable.getMessage}") *>
-//          IO.raiseError(e)
-//      }
   }
 
   override def suggest(query: String): IO[SearchRepository.SuggestResponse] = {
@@ -239,10 +230,9 @@ class ESSearchRepository[E <: Repository.Entity[_]: Encoder: Decoder: ClassTag](
         } else {
           IO.raiseError(new Exception(ElasticUtils.getReason(res.error)))
         }
+      }.onError { e =>
+        serviceLogger.error(s"suggest - ${indexName} - query: '$query' - error: ${e.getMessage}") *>
+          IO.raiseError(e)
       }
-//        .mapError(RepoFailure).tapError { e =>
-    //        serviceLogger.error(s"suggest - ${indexName} - query: '$query' - error: ${e.throwable.getMessage}") *>
-    //          IO.raiseError(e)
-    //      }
   }
 }

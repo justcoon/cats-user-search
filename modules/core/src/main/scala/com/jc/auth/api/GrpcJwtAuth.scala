@@ -11,18 +11,14 @@ object GrpcJwtAuth {
   private val AuthHeader: Metadata.Key[String] =
     Metadata.Key.of(JwtAuthenticator.AuthHeader, Metadata.ASCII_STRING_MARSHALLER)
 
+  private val UnauthenticatedException: StatusException = new StatusException(Status.UNAUTHENTICATED)
+
   def authenticated[F[_]: Sync](ctx: Metadata, authenticator: JwtAuthenticator.Service[F]): F[String] = {
     import cats.syntax.all._
-    import cats.data.OptionT
-
-    val maybeSubject = for {
-      rawToken <- OptionT(Sync[F].delay(Option(ctx.get(AuthHeader))))
-      subject <- OptionT(authenticator.authenticated(JwtAuthenticator.sanitizeBearerAuthToken(rawToken)))
+    for {
+      rawToken <- Sync[F].fromOption(Option(ctx.get(AuthHeader)), UnauthenticatedException)
+      maybeSubject <- authenticator.authenticated(JwtAuthenticator.sanitizeBearerAuthToken(rawToken))
+      subject <- Sync[F].fromOption(maybeSubject, UnauthenticatedException)
     } yield subject
-
-    maybeSubject.value.flatMap {
-      case Some(s) => Sync[F].delay(s)
-      case None => Sync[F].raiseError(new StatusException(Status.UNAUTHENTICATED))
-    }
   }
 }
