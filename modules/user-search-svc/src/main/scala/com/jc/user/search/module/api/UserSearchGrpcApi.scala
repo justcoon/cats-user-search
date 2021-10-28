@@ -54,9 +54,6 @@ object UserSearchGrpcApi {
       val q = if (request.query.isBlank) None else Some(request.query)
       userSearchRepo
         .search(q, request.page, request.pageSize, ss)
-        .onError { e =>
-          Async[F].delay(SearchUsersRes(result = SearchUsersRes.Result.Failure(e.getMessage)))
-        }
         .map { r =>
           SearchUsersRes(
             r.items.map(_.transformInto[proto.User]),
@@ -65,6 +62,9 @@ object UserSearchGrpcApi {
             r.count,
             SearchUsersRes.Result.Success("")
           )
+        }
+        .recover { e =>
+          SearchUsersRes(result = SearchUsersRes.Result.Failure(e.getMessage))
         }
     }
 
@@ -91,11 +91,11 @@ object UserSearchGrpcApi {
     override def suggestUsers(request: SuggestUsersReq, ctx: Metadata): F[SuggestUsersRes] = {
       userSearchRepo
         .suggest(request.query)
-        .onError { e =>
-          Async[F].delay(SearchUsersRes(result = SearchUsersRes.Result.Failure(e.getMessage)))
-        }
         .map { r =>
           SuggestUsersRes(r.items.map(_.transformInto[PropertySuggestion]), SuggestUsersRes.Result.Success(""))
+        }
+        .recover { e =>
+          SuggestUsersRes(result = SuggestUsersRes.Result.Failure(e.getMessage))
         }
     }
 
@@ -111,9 +111,6 @@ object UserSearchGrpcApi {
       val q = if (request.query.isBlank) None else Some(request.query)
       departmentSearchRepo
         .search(q, request.page, request.pageSize, ss)
-        .onError { e =>
-          Async[F].delay(SearchDepartmentsRes(result = SearchDepartmentsRes.Result.Failure(e.getMessage)))
-        }
         .map { r =>
           SearchDepartmentsRes(
             r.items.map(_.transformInto[proto.Department]),
@@ -121,6 +118,9 @@ object UserSearchGrpcApi {
             r.pageSize,
             r.count,
             SearchDepartmentsRes.Result.Success(""))
+        }
+        .recover { e =>
+          SearchDepartmentsRes(result = SearchDepartmentsRes.Result.Failure(e.getMessage))
         }
     }
 
@@ -149,13 +149,13 @@ object UserSearchGrpcApi {
     override def suggestDepartments(request: SuggestDepartmentsReq, ctx: Metadata): F[SuggestDepartmentsRes] = {
       departmentSearchRepo
         .suggest(request.query)
-        .onError { e =>
-          Async[F].delay(SearchDepartmentsRes(result = SearchDepartmentsRes.Result.Failure(e.getMessage)))
-        }
         .map { r =>
           SuggestDepartmentsRes(
             r.items.map(_.transformInto[PropertySuggestion]),
             SuggestDepartmentsRes.Result.Success(""))
+        }
+        .recover { e =>
+          SuggestDepartmentsRes(result = SuggestDepartmentsRes.Result.Failure(e.getMessage))
         }
     }
   }

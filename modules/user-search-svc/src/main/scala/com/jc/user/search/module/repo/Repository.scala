@@ -74,8 +74,7 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
       elasticClient.execute {
         indexInto(indexName).doc(value).id(id)
       }.map(_.isSuccess).onError { e =>
-        serviceLogger.error(s"insert - ${indexName} - id: ${value.id} - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"insert - ${indexName} - id: ${value.id} - error: ${e.getMessage}")
       }
   }
 
@@ -85,8 +84,7 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
       elasticClient.execute {
         updateById(indexName, value.id.toString).doc(value)
       }.map(_.isSuccess).onError { e =>
-        serviceLogger.error(s"update - ${indexName} - id: ${id} - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"update - ${indexName} - id: ${id} - error: ${e.getMessage}")
       }
   }
 
@@ -95,8 +93,7 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
       elasticClient.execute {
         deleteById(indexName, id.toString)
       }.map(_.isSuccess).onError { e =>
-        serviceLogger.error(s"update - id: ${id} - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"update - id: ${id} - error: ${e.getMessage}")
       }
   }
 
@@ -110,8 +107,7 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
         else
           Option.empty
       }.onError { e =>
-        serviceLogger.error(s"find - ${indexName} - id: ${id} - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"find - ${indexName} - id: ${id} - error: ${e.getMessage}")
       }
   }
 
@@ -120,8 +116,7 @@ class ESRepository[ID: Encoder: Decoder, E <: Repository.Entity[ID]: Encoder: De
       elasticClient.execute {
         searchIndex(indexName).matchAllQuery()
       }.map(_.result.to[E]).onError { e =>
-        serviceLogger.error(s"findAll - ${indexName} - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"findAll - ${indexName} - error: ${e.getMessage}")
       }
   }
 }
@@ -167,8 +162,7 @@ class ESSearchRepository[E <: Repository.Entity[_]: Encoder: Decoder: ClassTag](
           IO.raiseError(new Exception(ElasticUtils.getReason(res.error)))
         }
       }.onError { e =>
-        serviceLogger.error(s"search - ${indexName} - query: '${q}' - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"search - ${indexName} - query: '${q}' - error: ${e.getMessage}")
       }
   }
 
@@ -198,8 +192,7 @@ class ESSearchRepository[E <: Repository.Entity[_]: Encoder: Decoder: ClassTag](
       }.onError { e =>
         serviceLogger.error(
           s"search - ${indexName} - query: '${query.getOrElse("N/A")}', page: $page, pageSize: $pageSize, sorts: ${sorts
-            .mkString("[", ",", "]")} - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+            .mkString("[", ",", "]")} - error: ${e.getMessage}")
       }
   }
 
@@ -231,8 +224,7 @@ class ESSearchRepository[E <: Repository.Entity[_]: Encoder: Decoder: ClassTag](
           IO.raiseError(new Exception(ElasticUtils.getReason(res.error)))
         }
       }.onError { e =>
-        serviceLogger.error(s"suggest - ${indexName} - query: '$query' - error: ${e.getMessage}") *>
-          IO.raiseError(e)
+        serviceLogger.error(s"suggest - ${indexName} - query: '$query' - error: ${e.getMessage}")
       }
   }
 }
