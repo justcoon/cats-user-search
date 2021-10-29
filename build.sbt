@@ -17,6 +17,7 @@ lazy val Versions = new {
   val chimney = "0.6.1"
   val pauldijouJwt = "5.0.0"
   val tapir = "0.18.3"
+  val kafka = "2.8.1"
 
   val scalaTest = "3.2.10"
   val gatling = "3.6.1"
@@ -57,6 +58,9 @@ lazy val library =
       "com.thesamet.scalapb" %% "scalapb-runtime"                             % scalapb.compiler.Version.scalapbVersion % "protobuf"
     val scalapbRuntimeGrpc = "com.thesamet.scalapb" %% "scalapb-runtime-grpc" % scalapb.compiler.Version.scalapbVersion
 
+    val kafkaClients = "org.apache.kafka"                               % "kafka-clients" % Versions.kafka
+    val kafkaStreamsScala = "org.apache.kafka" %% "kafka-streams-scala" % Versions.kafka
+
     val gatlingCharts = "io.gatling.highcharts" % "gatling-charts-highcharts" % Versions.gatling
     val gatlingTest = "io.gatling"              % "gatling-test-framework"    % Versions.gatling
     val gatlingGrpc = "com.github.phisgr"       % "gatling-grpc"              % Versions.gatlingGrpc
@@ -64,7 +68,6 @@ lazy val library =
     val scalatest = "org.scalatest" %% "scalatest"                             % Versions.scalaTest           % "test"
     val randomDataGenerator = "com.danielasfregola" %% "random-data-generator" % Versions.randomDataGenerator % "test"
 
-    // Java libraries
     val logback = "ch.qos.logback" % "logback-classic" % Versions.logback
   }
 
@@ -196,11 +199,12 @@ lazy val `user-search-svc` =
         library.grpcServices,
         library.grpcNetty,
         library.grpcNettyShadded,
+        library.kafkaClients,
+        library.kafkaStreamsScala,
         library.scalapbRuntime,
         library.scalapbRuntimeGrpc,
         library.scalatest,
         library.randomDataGenerator,
-        // Java libraries
         library.logback
       )
     )
