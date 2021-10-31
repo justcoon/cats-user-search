@@ -17,6 +17,7 @@ lazy val Versions = new {
   val chimney = "0.6.1"
   val pauldijouJwt = "5.0.0"
   val tapir = "0.18.3"
+  val fs2Kafka = "2.2.0"
 
   val scalaTest = "3.2.10"
   val gatling = "3.6.1"
@@ -48,6 +49,8 @@ lazy val library =
     val pureconfig = "com.github.pureconfig" %% "pureconfig"                              % Versions.pureconfig
     val refinedPureconfig = "eu.timepit" %% "refined-pureconfig"                          % Versions.refined
     val chimney = "io.scalaland" %% "chimney"                                             % Versions.chimney
+
+    val fs2Kafka = "com.github.fd4s" %% "fs2-kafka" % Versions.fs2Kafka
 
     val grpcServices = "io.grpc"     % "grpc-services"     % Versions.grpc
     val grpcNetty = "io.grpc"        % "grpc-netty"        % Versions.grpc
@@ -193,6 +196,7 @@ lazy val `user-search-svc` =
         library.pureconfig,
         library.refinedPureconfig,
         library.chimney,
+        library.fs2Kafka,
         library.grpcServices,
         library.grpcNetty,
         library.grpcNettyShadded,
@@ -200,7 +204,6 @@ lazy val `user-search-svc` =
         library.scalapbRuntimeGrpc,
         library.scalatest,
         library.randomDataGenerator,
-        // Java libraries
         library.logback
       )
     )

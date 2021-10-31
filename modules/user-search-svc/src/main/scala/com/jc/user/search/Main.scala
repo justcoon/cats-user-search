@@ -7,7 +7,14 @@ import com.jc.logging.LogbackLoggingSystem
 import com.jc.logging.api.LoggingSystemGrpcApi
 import com.jc.user.search.model.config.{AppConfig, ElasticsearchConfig, HttpApiConfig}
 import com.jc.user.search.module.api.UserSearchGrpcApi
-import com.jc.user.search.module.repo.{DepartmentSearchRepo, UserSearchRepo}
+import com.jc.user.search.module.kafka.KafkaConsumer
+import com.jc.user.search.module.processor.EventProcessor
+import com.jc.user.search.module.repo.{
+  DepartmentSearchRepo,
+  DepartmentSearchRepoInit,
+  UserSearchRepo,
+  UserSearchRepoInit
+}
 import com.sksamuel.elastic4s.{ElasticClient, ElasticProperties}
 import com.sksamuel.elastic4s.http.JavaClient
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder
@@ -53,14 +60,21 @@ object Main extends IOApp.Simple {
 
     grpcApiResources = for {
       elasticClient <- createElasticClient(appConfig.elasticsearch)
+      _ <- Resource.eval(UserSearchRepoInit.elasticsearchInit(appConfig.elasticsearch.userIndexName, elasticClient))
+      _ <- Resource.eval(
+        DepartmentSearchRepoInit.elasticsearchInit(appConfig.elasticsearch.departmentIndexName, elasticClient))
       userRepo <- Resource.eval(UserSearchRepo.elasticsearch(appConfig.elasticsearch.userIndexName, elasticClient))
       depRepo <- Resource.eval(
         DepartmentSearchRepo.elasticsearch(appConfig.elasticsearch.departmentIndexName, elasticClient))
+      eventProcessor <- Resource.eval(EventProcessor.live[IO](userRepo, depRepo))
       userSearchGrpcApi <- UserSearchGrpcApi.liveApiServiceResource[IO](userRepo, depRepo, authenticator)
       loggingSystemGrpcApi <- LoggingSystemGrpcApi.liveApiServiceResource[IO](loggingSystem, authenticator)
     } yield {
-      userSearchGrpcApi :: loggingSystemGrpcApi :: Nil
+      (eventProcessor, userSearchGrpcApi :: loggingSystemGrpcApi :: Nil)
     }
-    _ <- grpcApiResources.use(r => runGrpcServer(r, appConfig.grpcApi, logger))
+    _ <- grpcApiResources.use { case (eventProcessor, grpcApiServices) =>
+      KafkaConsumer.consume(appConfig.kafka, eventProcessor).compile.drain &>
+        runGrpcServer(grpcApiServices, appConfig.grpcApi, logger)
+    }
   } yield ()
 }
