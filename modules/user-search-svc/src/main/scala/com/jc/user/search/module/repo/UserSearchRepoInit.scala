@@ -11,4 +11,8 @@ object UserSearchRepoInit {
       new ESRepositoryInitializer(indexName, UserSearchRepo.EsUserSearchRepoService.fields, elasticClient, logger)
     }
   }
+
+  def elasticsearchInit(indexName: String, elasticClient: ElasticClient): IO[Boolean] = {
+    elasticsearch(indexName, elasticClient).flatMap(_.init())
+  }
 }

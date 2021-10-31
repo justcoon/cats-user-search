@@ -15,4 +15,8 @@ object DepartmentSearchRepoInit {
         logger)
     }
   }
+
+  def elasticsearchInit(indexName: String, elasticClient: ElasticClient): IO[Boolean] = {
+    elasticsearch(indexName, elasticClient).flatMap(_.init())
+  }
 }

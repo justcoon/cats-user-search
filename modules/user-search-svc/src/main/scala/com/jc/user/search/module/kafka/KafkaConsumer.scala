@@ -13,6 +13,7 @@ object KafkaConsumer {
 
   def consumerSettings(config: KafkaConfig): ConsumerSettings[IO, String, EventProcessor.EventEnvelope[_]] = {
     ConsumerSettings(Deserializer.string[IO], eventDes(config))
+      .withBootstrapServers(config.addresses.mkString(","))
       .withGroupId(s"user-search-${config.userTopic}-2")
       .withClientId("user-search-client-2")
       .withAutoOffsetReset(AutoOffsetReset.Earliest)
@@ -45,5 +46,16 @@ object KafkaConsumer {
       }
       .through(commitBatchWithin(10, 15.seconds))
   }
+
+//  def resource(config: KafkaConfig, processor: EventProcessor.Service[IO]) = {
+//    kafka.KafkaConsumer.resource(consumerSettings(config)).use { c =>
+//      c.stream.subscribeTo(config.userTopic, config.departmentTopic)
+//        .records
+//        .mapAsync(1) { cr =>
+//          processor.process(cr.record.value).as(cr.offset)
+//        }
+//        .through(commitBatchWithin(10, 15.seconds))
+//    }
+//  }
 
 }
