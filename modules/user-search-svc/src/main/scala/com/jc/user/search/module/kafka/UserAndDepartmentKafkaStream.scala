@@ -18,9 +18,10 @@ import java.util.Properties
 object UserAndDepartmentKafkaStream {
 
   private def taggedStringSerde[T]: Serde[String @@ T] = {
-    val serializer = (v: String @@ T) => Serdes.stringSerde.serializer().serialize("", v)
-    val deserializer = (b: Array[Byte]) =>
-      Option(Serdes.stringSerde.deserializer().deserialize("", b)).map(tag[T][String])
+    val ss = Serdes.stringSerde.serializer()
+    val serializer = (t: String, v: String @@ T) => ss.serialize(t, v)
+    val sd = Serdes.stringSerde.deserializer()
+    val deserializer = (t: String, b: Array[Byte]) => Option(sd.deserialize(t, b)).map(tag[T][String])
     Serdes.fromFn[String @@ T](serializer, deserializer)
   }
 
@@ -41,7 +42,6 @@ object UserAndDepartmentKafkaStream {
   }
 
   def streamProperties(config: KafkaConfig): Properties = {
-
     val props = new Properties
     props.put(StreamsConfig.APPLICATION_ID_CONFIG, "user-search-app")
     props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, config.addresses.mkString(","))
