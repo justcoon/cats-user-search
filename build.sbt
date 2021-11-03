@@ -1,5 +1,5 @@
 Global / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-Scope.Global / scalaVersion := "2.13.6"
+Scope.Global / scalaVersion := "2.13.7"
 
 lazy val Versions = new {
   val catsEffect = "3.2.9"
@@ -90,9 +90,7 @@ lazy val `core` =
     .settings(
       addCompilerPlugin("org.typelevel" %% "kind-projector" % Versions.kindProjector cross CrossVersion.full),
 //      Compile /scalapbCodeGeneratorOptions +=
-      Compile / PB.protocOptions := Seq(
-        "--experimental_allow_proto3_optional"
-      ) // FIXME optional field https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md
+      Compile / PB.protocOptions += "--experimental_allow_proto3_optional", // FIXME optional field https://github.com/protocolbuffers/protobuf/blob/master/docs/implementing_proto3_presence.md
 //      Compile / PB.targets := Seq(
 //        scalapb.gen(grpc = true) -> (Compile / sourceManaged).value
 //      )

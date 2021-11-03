@@ -51,7 +51,7 @@ object LoggingSystemGrpcApi {
       LoggerConfiguration(
         configuration.name,
         logLevelMapping.toLogger(configuration.effectiveLevel),
-        configuration.configuredLevel.flatMap(logLevelMapping.toLogger.get).orNull
+        configuration.configuredLevel.flatMap(logLevelMapping.toLogger.get)
       )
 
     override def setLoggerConfiguration(
@@ -59,7 +59,7 @@ object LoggingSystemGrpcApi {
       ctx: Metadata): F[LoggerConfigurationRes] = {
       for {
         _ <- GrpcJwtAuth.authenticated(ctx, authenticator)
-        res <- loggingSystem.setLogLevel(request.name, Option(request.level).flatMap(logLevelMapping.fromLogger.get))
+        res <- loggingSystem.setLogLevel(request.name, request.level.flatMap(logLevelMapping.fromLogger.get))
         levels <- getSupportedLogLevels
         configuration <-
           if (res) {

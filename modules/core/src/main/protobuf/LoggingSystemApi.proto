@@ -23,15 +23,13 @@ message LoggerConfiguration {
   // logger name
   string name = 1;
   LogLevel effectiveLevel = 2;
-  //    optional LogLevel configuredLevel = 3;
-  LogLevel configuredLevel = 3;
+  optional LogLevel configuredLevel = 3;
 }
 
 message SetLoggerConfigurationReq {
   // logger name
   string name = 1;
-  //    optional LogLevel level = 2;
-  LogLevel level = 2;
+  optional LogLevel level = 2;
 }
 
 message GetLoggerConfigurationReq {

@@ -58,7 +58,7 @@ object Main extends IOApp.Simple {
     loggingSystem <- LogbackLoggingSystem.create[IO]()
     authenticator = JwtAuthenticator.live[IO](appConfig.jwt)
 
-    grpcApiResources = for {
+    resources = for {
       elasticClient <- createElasticClient(appConfig.elasticsearch)
       _ <- Resource.eval(UserSearchRepoInit.elasticsearchInit(appConfig.elasticsearch.userIndexName, elasticClient))
       _ <- Resource.eval(
@@ -72,7 +72,7 @@ object Main extends IOApp.Simple {
     } yield {
       (eventProcessor, userSearchGrpcApi :: loggingSystemGrpcApi :: Nil)
     }
-    _ <- grpcApiResources.use { case (eventProcessor, grpcApiServices) =>
+    _ <- resources.use { case (eventProcessor, grpcApiServices) =>
       KafkaConsumer.consume(appConfig.kafka, eventProcessor).compile.drain &>
         runGrpcServer(grpcApiServices, appConfig.grpcApi, logger)
     }
