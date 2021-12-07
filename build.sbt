@@ -2,18 +2,18 @@ Global / resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/cont
 Scope.Global / scalaVersion := "2.13.7"
 
 lazy val Versions = new {
-  val catsEffect = "3.2.9"
+  val catsEffect = "3.3.0"
   val log4cats = "2.1.1"
   val kindProjector = "0.13.2"
   val http4s = "0.22.7"
-  val elastic4s = "7.15.1"
+  val elastic4s = "7.15.4"
   val jackson = "2.13.0"
   val circe = "0.14.1"
   val randomDataGenerator = "2.9"
-  val pureconfig = "0.17.0"
-  val refined = "0.9.27"
-  val logback = "1.2.6"
-  val grpc = "1.41.0"
+  val pureconfig = "0.17.1"
+  val refined = "0.9.28"
+  val logback = "1.2.7"
+  val grpc = "1.42.1"
   val chimney = "0.6.1"
   val pauldijouJwt = "5.0.0"
   val tapir = "0.18.3"
@@ -21,7 +21,7 @@ lazy val Versions = new {
 
   val scalaTest = "3.2.10"
   val gatling = "3.6.1"
-  val gatlingGrpc = "0.11.1"
+  val gatlingGrpc = "0.12.0"
 
 }
 

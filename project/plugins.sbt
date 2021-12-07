@@ -10,6 +10,6 @@ addSbtPlugin("com.typesafe.sbt"      % "sbt-git"       % "1.0.0")
 addSbtPlugin("com.thesamet"          % "sbt-protoc"    % "1.0.4")
 addSbtPlugin("io.gatling" % "gatling-sbt" % "3.2.1")
 
-addSbtPlugin("org.typelevel" % "sbt-fs2-grpc" % "2.2.2")
+addSbtPlugin("org.typelevel" % "sbt-fs2-grpc" % "2.3.0")
 
 libraryDependencies += "com.thesamet.scalapb" %% "compilerplugin" % "0.11.6"
